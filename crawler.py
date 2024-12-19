@@ -3,6 +3,13 @@ from bs4 import BeautifulSoup
 import json
 from urllib.parse import urlparse, parse_qs
 import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 class WechatCrawler:
     def __init__(self):
@@ -10,6 +17,47 @@ class WechatCrawler:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
     
+    def get_cookie(self, url):
+        """使用Selenium获取Cookie"""
+        try:
+            # 配置Chrome选项
+            chrome_options = Options()
+            chrome_options.add_argument('--window-size=800,600')
+            chrome_options.add_argument('--disable-gpu')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+            
+            # 初始化浏览器
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            
+            try:
+                # 打开文章页面
+                driver.get(url)
+                
+                # 等待页面加载完成
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "body"))
+                )
+                
+                # 获取所有cookie
+                cookies = driver.get_cookies()
+                cookie_string = '; '.join([f"{cookie['name']}={cookie['value']}" for cookie in cookies])
+                
+                return {
+                    'status': 'success',
+                    'cookie': cookie_string
+                }
+                
+            finally:
+                driver.quit()
+                
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f"获取Cookie失败: {str(e)}"
+            }
+
     def extract_biz(self, url):
         """从URL中提取biz参数"""
         try:

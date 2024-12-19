@@ -11,6 +11,18 @@ crawler = WechatCrawler()
 def index():
     return render_template('index.html')
 
+@app.route('/get_cookie', methods=['POST'])
+def get_cookie():
+    url = request.form.get('url')
+    if not url:
+        return jsonify({'status': 'error', 'message': '请输入URL'})
+    
+    try:
+        result = crawler.get_cookie(url)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/get_articles', methods=['POST'])
 def get_articles():
     url = request.form.get('url')
